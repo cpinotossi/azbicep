@@ -1,6 +1,7 @@
 targetScope='resourceGroup'
 
 param prefix string
+param haspubip bool = false
 param vnetname string
 param location string
 @secure()
@@ -9,6 +10,7 @@ param username string
 param myObjectId string
 param postfix string
 param privateip string
+param isipff bool = false
 @description('Optional. Custom data associated to the VM, this value will be automatically converted into base64 to account for the expected VM format.')
 @secure()
 param customData string = ''
@@ -17,6 +19,7 @@ param customData string = ''
   'linux'
   'nodejs'
   'winserver'
+  'cisco'
 ])
 param imageRef string
 
@@ -45,10 +48,27 @@ var imageReferences = {
     sku: '4-3'
     version: 'latest'
   }
+  cisco: {
+    publisher: 'cisco'
+    offer: 'cisco-csr-1000v'
+    sku: '17_2_1-byol'
+    version: '17.2.120200508'
+  }
 }
 
 var linconfig= {
   linux: {
+    disablePasswordAuthentication: false
+    ssh: {
+      publicKeys: [
+        {
+          path:'/home/chpinoto/.ssh/authorized_keys'
+          keyData: sshkey.properties.publicKey
+        }
+      ]
+    }
+  }
+  cisco: {
     disablePasswordAuthentication: false
     ssh: {
       publicKeys: [
@@ -70,6 +90,11 @@ var plan={
     publisher:'bitnami'
     product:'nodejs'
   }
+  cisco:{
+    name:'17_2_1-byol'
+    publisher:'cisco'
+    product:'cisco-csr-1000v'
+  }
   windows: null
   linux: null
   winserver: null
@@ -77,6 +102,17 @@ var plan={
 
 resource vnet 'Microsoft.Network/virtualNetworks@2020-08-01' existing = {
   name: vnetname
+}
+
+resource pubip 'Microsoft.Network/publicIPAddresses@2021-03-01' = if (haspubip) {
+  name: '${prefix}${postfix}'
+  location: location
+  sku: {
+    name:'Standard'
+  }
+  properties: {
+    publicIPAllocationMethod:'Static'
+  }
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2020-08-01' = {
@@ -87,6 +123,9 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-08-01' = {
       {
         name: '${prefix}${postfix}'
         properties: {
+          publicIPAddress : haspubip ? {
+            id: pubip.id
+          } : null
           privateIPAddress:privateip
           // privateIPAddress: '10.0.0.4'
           privateIPAllocationMethod: 'Static'
@@ -102,7 +141,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-08-01' = {
       dnsServers: []
     }
     enableAcceleratedNetworking: false
-    enableIPForwarding: false
+    enableIPForwarding: isipff ? true : false
   }
 }
 
@@ -157,7 +196,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   }
 }
 
-resource vmaadextension 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = if (imageRef!='windows' && imageRef!='winserver') {
+resource vmaadextension 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = if (imageRef!='windows' && imageRef!='winserver' && imageRef!='cisco') {
   parent: vm
   name: 'AADSSHLoginForLinux'
   location: location
@@ -168,7 +207,7 @@ resource vmaadextension 'Microsoft.Compute/virtualMachines/extensions@2020-12-01
   }
 }
 
-resource nwagentextension 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = if (imageRef!='windows' && imageRef!='winserver') {
+resource nwagentextension 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = if (imageRef!='windows' && imageRef!='winserver' && imageRef!='cisco') {
   parent: vm
   name: 'NetworkWatcherAgentLinux'
   location: location
@@ -188,5 +227,9 @@ resource raMe2VM 'Microsoft.Authorization/roleAssignments@2018-01-01-preview' = 
     roleDefinitionId: tenantResourceId('Microsoft.Authorization/roleDefinitions',roleVirtualMachineAdministratorName)
   }
 }
+
+@description('VNet Name')
+output pubip string = haspubip ? pubip.properties.ipAddress : ''
+
 
 

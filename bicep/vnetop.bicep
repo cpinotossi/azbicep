@@ -6,13 +6,10 @@ param location string
 param cidervnet string
 param cidersubnet string
 param ciderbastion string
-param ciderdnsrin string
-param ciderdnsrout string
-param cidergw string
-param cidrop string
-param opvpnip string
 param srcip string
 param desip string
+param descider string
+param gwip string
 
 
 resource vnethub 'Microsoft.Network/virtualNetworks@2021-03-01' = {
@@ -35,6 +32,9 @@ resource vnethub 'Microsoft.Network/virtualNetworks@2021-03-01' = {
           networkSecurityGroup:{
             id: nsg.id
           }
+          routeTable:{
+            id: rt.id
+          }
         }
       }
       {
@@ -44,44 +44,6 @@ resource vnethub 'Microsoft.Network/virtualNetworks@2021-03-01' = {
           delegations: []
           privateEndpointNetworkPolicies: 'Enabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
-        }
-      }
-      {
-        name: 'dnsrin'
-        properties: {
-          addressPrefix: ciderdnsrin
-          delegations: [
-            {
-              name: 'Microsoft.Network.dnsResolvers'
-              properties:{
-                serviceName: 'Microsoft.Network/dnsResolvers'
-              }
-            }
-          ]
-          privateEndpointNetworkPolicies:'Disabled'
-          privateLinkServiceNetworkPolicies:'Enabled'
-        }
-      }
-      {
-        name: 'dnsrout'
-        properties: {
-          addressPrefix: ciderdnsrout
-          delegations: [
-            {
-              name: 'Microsoft.Network.dnsResolvers'
-              properties:{
-                serviceName: 'Microsoft.Network/dnsResolvers'
-              }
-            }
-          ]
-          privateEndpointNetworkPolicies:'Disabled'
-          privateLinkServiceNetworkPolicies:'Enabled'
-        }
-      }
-      {
-        name: 'GatewaySubnet'
-        properties: {
-          addressPrefix: cidergw
         }
       }
     ]
@@ -136,7 +98,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
   properties: {
     securityRules: [
       {
-        name: 'ssh'
+        name: 'ssh' // maybe not needed can be done via bastion
         properties: {
           protocol: 'Tcp'
           sourcePortRange: '*'
@@ -149,29 +111,48 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
         }
       }
       {
-        name: 'az2op'
-        properties: {
-          protocol: '*'
-          sourcePortRange: '*'
-          destinationPortRange: '*'
-          sourceAddressPrefix: cidrop
-          destinationAddressPrefix: cidervnet
-          access: 'Allow'
-          priority: 110
-          direction: 'Inbound'
-        }
-      }
-      {
         name: 'op2az'
         properties: {
           protocol: '*'
           sourcePortRange: '*'
           destinationPortRange: '*'
           sourceAddressPrefix: cidervnet
-          destinationAddressPrefix: cidrop
+          destinationAddressPrefix: descider
           access: 'Allow'
           priority: 110
           direction: 'outbound'
+        }
+      }
+      {
+        name: 'az2op'
+        properties: {
+          protocol: '*'
+          sourcePortRange: '*'
+          destinationPortRange: '*'
+          sourceAddressPrefix: descider
+          destinationAddressPrefix: cidervnet
+          access: 'Allow'
+          priority: 110
+          direction: 'inbound'
+        }
+      }
+    ]
+  }
+}
+
+resource rt 'Microsoft.Network/routeTables@2022-01-01' = {
+  name: '${prefix}${postfix}'
+  location: location
+  properties:{
+    disableBgpRoutePropagation: true
+    routes:[
+      {
+        name:'${prefix}${postfix}'
+        properties:{
+          nextHopType: 'VirtualAppliance'
+          addressPrefix: descider // target ip ragne
+          nextHopIpAddress: gwip
+          hasBgpOverride: false
         }
       }
     ]

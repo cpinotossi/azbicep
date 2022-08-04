@@ -2,15 +2,8 @@ targetScope='resourceGroup'
 
 param prefix string
 param postfix string
-param vnetname string
 param location string
 param myObjectId string
-param myip string
-
-
-resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' existing = {
-  name: vnetname
-}
 
 resource sa 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: '${prefix}${postfix}'
@@ -20,23 +13,7 @@ resource sa 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
   kind: 'StorageV2'
   properties: {
-    networkAcls: {
-      resourceAccessRules: []
-      bypass: 'AzureServices'
-      virtualNetworkRules: [
-        {
-          id: '${vnet.id}/subnets/${prefix}'
-          action: 'Allow'
-        }
-      ]
-      ipRules: [
-        {
-          value: myip
-          action: 'Allow'
-        }
-      ]
-      defaultAction: 'Deny'
-    }
+    publicNetworkAccess:'Enabled'
     accessTier: 'Hot'
   }
 }
