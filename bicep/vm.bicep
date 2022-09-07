@@ -11,8 +11,6 @@ param myObjectId string
 param postfix string
 param privateip string
 param isipff bool = false
-@description('Optional. Custom data associated to the VM, this value will be automatically converted into base64 to account for the expected VM format.')
-@secure()
 param customData string = ''
 @allowed([
   'windows'

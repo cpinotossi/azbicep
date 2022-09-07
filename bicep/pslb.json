@@ -1,0 +1,98 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "loadBalancers_cptdazlb1_name": {
+            "defaultValue": "cptdazlb1",
+            "type": "String"
+        },
+        "publicIPAddresses_cptdazlb1_externalid": {
+            "defaultValue": "/subscriptions/f474dec9-5bab-47a3-b4d3-e641dac87ddb/resourceGroups/cptdazlb/providers/Microsoft.Network/publicIPAddresses/cptdazlb1",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('loadBalancers_cptdazlb1_name')]",
+            "location": "eastus",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_cptdazlb1_name'), parameters('loadBalancers_cptdazlb1_name'))]"
+            ],
+            "tags": {
+                "env": "cptdazlb"
+            },
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[parameters('loadBalancers_cptdazlb1_name')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[parameters('publicIPAddresses_cptdazlb1_externalid')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[parameters('loadBalancers_cptdazlb1_name')]",
+                        "properties": {
+                            "loadBalancerBackendAddresses": [
+                                {
+                                    "name": "cptdazlb_cptdazlbspoke1vmcptdazlbspoke1vm",
+                                    "properties": {}
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "loadBalancingRules": [],
+                "probes": [],
+                "inboundNatRules": [],
+                "outboundRules": [
+                    {
+                        "name": "[parameters('loadBalancers_cptdazlb1_name')]",
+                        "properties": {
+                            "allocatedOutboundPorts": 0,
+                            "protocol": "All",
+                            "enableTcpReset": true,
+                            "idleTimeoutInMinutes": 4,
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('loadBalancers_cptdazlb1_name'), parameters('loadBalancers_cptdazlb1_name'))]"
+                            },
+                            "frontendIPConfigurations": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_cptdazlb1_name')), concat('/frontendIPConfigurations/', parameters('loadBalancers_cptdazlb1_name')))]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "inboundNatPools": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers/backendAddressPools",
+            "apiVersion": "2020-11-01",
+            "name": "[concat(parameters('loadBalancers_cptdazlb1_name'), '/', parameters('loadBalancers_cptdazlb1_name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_cptdazlb1_name'))]"
+            ],
+            "properties": {
+                "loadBalancerBackendAddresses": [
+                    {
+                        "name": "cptdazlb_cptdazlbspoke1vmcptdazlbspoke1vm",
+                        "properties": {}
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,5 +1,6 @@
 param vnethubname string
 param vnetspokename string
+param spokeUseRemoteGateways bool = true
 
 resource vnethub 'Microsoft.Network/virtualNetworks@2021-08-01' existing = {
   name: vnethubname
@@ -31,6 +32,6 @@ resource peeringspoke2hub 'Microsoft.Network/virtualNetworks/virtualNetworkPeeri
     allowForwardedTraffic: true
     allowVirtualNetworkAccess: true
     allowGatewayTransit: true
-    useRemoteGateways: true
+    useRemoteGateways: spokeUseRemoteGateways
   }
 }
