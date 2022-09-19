@@ -144,7 +144,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2020-08-01' = {
 }
 
 resource sshkey 'Microsoft.Compute/sshPublicKeys@2021-07-01' = {
-  name: prefix
+  name: '${prefix}${postfix}'
   location: location
   properties: {
     publicKey: loadTextContent('../ssh/chpinoto.pub')

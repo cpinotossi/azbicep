@@ -8,6 +8,7 @@ param cidersubnet string
 param ciderdnsrin string = ''
 param ciderdnsrout string = ''
 param ciderbastion string = ''
+param ciderfirewall string = ''
 // This variable is needed because of:
 // - https://github.com/Azure/bicep/issues/4023
 // - https://stackoverflow.com/questions/52626721/subnet-azurefirewallsubnet-is-in-use-and-cannot-be-deleted 
@@ -23,12 +24,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
         properties: {
           addressPrefix: cidersubnet
           serviceEndpoints:[
-            {
+            /*{
               locations:[
                 location
               ]
               service:'Microsoft.Storage'
-            }
+            }*/
           ]
         }
       }
@@ -53,6 +54,9 @@ resource dnsroutsubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = 
   properties: {
     addressPrefix: ciderdnsrin
   }
+  dependsOn:[
+    dnsrinsubnet
+  ]
 }
 
 resource bastionsubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = if (!empty(ciderbastion)){
@@ -60,8 +64,20 @@ resource bastionsubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = 
   properties: {
     addressPrefix: ciderbastion //'10.0.1.0/24'
   }
+  dependsOn:[
+    dnsroutsubnet
+  ]
 }
 
+resource firewallsubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = if (!empty(ciderfirewall)){
+  name: '${vnet.name}/AzureFirewallSubnet'
+  properties: {
+    addressPrefix: ciderfirewall //'10.0.1.0/24'
+  }
+  dependsOn:[
+    bastionsubnet
+  ]
+}
 resource pubipbastion 'Microsoft.Network/publicIPAddresses@2021-03-01'  = if (!empty(ciderbastion)) {
   name: '${prefix}${postfix}bastion'
   location: location
@@ -81,6 +97,9 @@ resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = if (!empty(ciderb
   }
   properties: {
     enableTunneling: true
+    enableIpConnect: true
+    // enableFileCopy: true
+    // enableShareableLink: true
     ipConfigurations: [
       {
         name: '${prefix}${postfix}bastion'
