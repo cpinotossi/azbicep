@@ -1,10 +1,11 @@
 targetScope='resourceGroup'
 
 param prefix string
+param postfix string = ''
 param location string
 
 resource law 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
-  name: prefix
+  name: '${prefix}${postfix}'
   location: location
   properties: {
     sku:{
