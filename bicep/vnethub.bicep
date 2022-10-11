@@ -180,3 +180,4 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
 
 @description('VNet Name')
 output vnetname string = vnethub.name
+output vnetid string = vnethub.id

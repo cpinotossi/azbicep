@@ -1,0 +1,99 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "aseName": {
+            "type": "String"
+        },
+        "location": {
+            "type": "String"
+        },
+        "subscriptionId": {
+            "type": "String"
+        },
+        "dedicatedHostCount": {
+            "type": "String"
+        },
+        "zoneRedundant": {
+            "type": "Bool"
+        },
+        "virtualNetworkName": {
+            "type": "String"
+        },
+        "virtualNetworkResourceGroupName": {
+            "type": "String"
+        },
+        "virtualNetworkAddress": {
+            "type": "String"
+        },
+        "subnetName": {
+            "type": "String"
+        },
+        "subnetId": {
+            "type": "String"
+        },
+        "subnetAddress": {
+            "type": "String"
+        },
+        "delegationName": {
+            "type": "String"
+        },
+        "hostingEnvironmentId": {
+            "type": "String"
+        },
+        "ilbMode": {
+            "type": "Int"
+        },
+        "subnet": {
+            "type": "Object"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "updateExistingSubnetTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "apiVersion": "2018-04-01",
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "name": "[concat(parameters('virtualNetworkName'), '/', parameters('subnetName'))]",
+                            "properties": "[parameters('subnet')]"
+                        }
+                    ]
+                },
+                "parameters": {}
+            },
+            "subscriptionId": "[parameters('subscriptionId')]",
+            "resourceGroup": "[parameters('virtualNetworkResourceGroupName')]"
+        },
+        {
+            "type": "Microsoft.Web/hostingEnvironments",
+            "apiVersion": "2019-08-01",
+            "name": "[parameters('aseName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "['updateExistingSubnetTemplate']"
+            ],
+            "tags": {},
+            "kind": "ASEV3",
+            "properties": {
+                "name": "[parameters('aseName')]",
+                "location": "[parameters('location')]",
+                "dedicatedHostCount": "[parameters('dedicatedHostCount')]",
+                "zoneRedundant": "[parameters('zoneRedundant')]",
+                "InternalLoadBalancingMode": "[parameters('ilbMode')]",
+                "virtualNetwork": {
+                    "id": "[parameters('subnetId')]"
+                }
+            }
+        }
+    ]
+}
