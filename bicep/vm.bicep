@@ -8,7 +8,7 @@ param location string
 param password string
 param username string
 param myObjectId string
-param postfix string
+param postfix string = ''
 param privateip string
 param isipff bool = false
 param customData string = ''

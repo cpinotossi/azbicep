@@ -1,12 +1,11 @@
 targetScope = 'resourceGroup'
 
-param postfix string
+param postfix string = ''
 param prefix string
 param location string
 param cidervnet string
 param cidersubnet string
 param ciderbastion string
-
 
 resource vnethub 'Microsoft.Network/virtualNetworks@2021-03-01' = {
   name: '${prefix}${postfix}'
@@ -18,13 +17,15 @@ resource vnethub 'Microsoft.Network/virtualNetworks@2021-03-01' = {
         properties: {
           addressPrefix: cidersubnet
           serviceEndpoints:[
-            {
-              locations:[
-                location
-              ]
-              service:'Microsoft.Storage'
-            }
+            // {
+            //   locations:[
+            //     location
+            //   ]
+            //   service:'Microsoft.Storage'
+            // }
           ]
+          privateEndpointNetworkPolicies: 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Disabled'
         }
       }
       {
@@ -83,3 +84,5 @@ resource bastion 'Microsoft.Network/bastionHosts@2021-03-01' = {
 }
 
 output vnetname string = vnethub.name
+output id string = vnethub.id
+output subnetid string = vnethub.properties.subnets[0].id

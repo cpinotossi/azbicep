@@ -2,6 +2,7 @@ param prefix string
 param postfix string
 param location string
 param vmip string
+param ispublic bool = true
 
 resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' existing = {
   name: '${prefix}${postfix}'
@@ -90,3 +91,13 @@ resource pubip 'Microsoft.Network/publicIPAddresses@2021-03-01'  = {
     publicIPAllocationMethod:'Static'
   }
 }
+
+// resource publbipconfig 'Microsoft.Network/loadBalancers/frontendIPConfigurations@2022-05-01' =  if (ispublic){
+//     name: '/${prefix}${postfix}'
+//     properties: {
+//       privateIPAllocationMethod: 'Dynamic'
+//       publicIPAddress: {
+//         id: pubip.id
+//       }
+//     }
+//   }

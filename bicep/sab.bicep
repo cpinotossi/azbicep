@@ -39,4 +39,7 @@ resource rablobcontributor 'Microsoft.Authorization/roleAssignments@2018-01-01-p
     principalId: myObjectId
     roleDefinitionId: tenantResourceId('Microsoft.Authorization/RoleDefinitions',roleStorageBlobDataContributorName)
   }
+  tags:{
+    env: prefix
+  }
 }
