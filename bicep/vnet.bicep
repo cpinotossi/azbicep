@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 param prefix string
-param postfix string
+param postfix string = ''
 param location string
 param cidervnet string
 param cidersubnet string
@@ -9,15 +9,20 @@ param ciderdnsrin string = ''
 param ciderdnsrout string = ''
 param ciderbastion string = ''
 param ciderfirewall string = ''
+param dnsip string = '168.63.129.16'
 // This variable is needed because of:
 // - https://github.com/Azure/bicep/issues/4023
 // - https://stackoverflow.com/questions/52626721/subnet-azurefirewallsubnet-is-in-use-and-cannot-be-deleted 
-param bastionExist bool = false
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   name: '${prefix}${postfix}'
   location: location
   properties: {
+    dhcpOptions:{
+      dnsServers:[
+        dnsip
+      ]
+    }
     subnets: [
       {
         name: prefix
