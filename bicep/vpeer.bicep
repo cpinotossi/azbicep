@@ -1,13 +1,17 @@
 param vnethubname string
 param vnetspokename string
 param spokeUseRemoteGateways bool = true
+param rghubname string
+param rgspokename string
 
 resource vnethub 'Microsoft.Network/virtualNetworks@2021-08-01' existing = {
   name: vnethubname
+  scope: resourceGroup(rghubname)
 }
 
 resource vnetspoke 'Microsoft.Network/virtualNetworks@2021-08-01' existing = {
   name: vnetspokename
+  scope: resourceGroup(rgspokename)
 }
 
 resource peeringhub2spoke 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-03-01' = {
