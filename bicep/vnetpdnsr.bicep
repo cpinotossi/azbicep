@@ -22,24 +22,58 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   name: '${prefix}${postfix}'
   location: location
   properties: {
-    dhcpOptions:{
-      dnsServers:[
-        dnsip
-      ]
-    }
+    // dhcpOptions:{
+    //   dnsServers:[
+    //     dnsip
+    //   ]
+    // }
     subnets: [
       {
         name: prefix
         properties: {
           addressPrefix: cidersubnet
           serviceEndpoints:[
-            /*{
+            {
               locations:[
                 location
               ]
               service:'Microsoft.Storage'
-            }*/
+            }
           ]
+        }
+      }
+      {
+        name: dnsrsubnetinname
+        properties: {
+          addressPrefix: ciderdnsrin
+          delegations:[
+            {
+              name: 'Microsoft.Network.dnsResolvers'
+              properties: {
+                  serviceName: 'Microsoft.Network/dnsResolvers'
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: dnsrsubnetoutname
+        properties: {
+          addressPrefix: ciderdnsrout
+          delegations:[
+            {
+              name: 'Microsoft.Network.dnsResolvers'
+              properties: {
+                  serviceName: 'Microsoft.Network/dnsResolvers'
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'AzureBastionSubnet'
+        properties: {
+          addressPrefix: ciderbastion
         }
       }
     ]
@@ -51,33 +85,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource dnsrinsubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = if (!empty(ciderdnsrin)){
-  name: '${vnet.name}/${dnsrsubnetinname}'
-  properties: {
-    addressPrefix: ciderdnsrin
-  }
-}
-
-resource dnsroutsubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = if (!empty(ciderdnsrout)){
-  name: '${vnet.name}/${dnsrsubnetoutname}'
-  properties: {
-    addressPrefix: ciderdnsrout
-  }
-}
-
-resource bastionsubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = if (!empty(ciderbastion)){
-  name: '${vnet.name}/AzureBastionSubnet'
-  properties: {
-    addressPrefix: ciderbastion //'10.0.1.0/24'
-  }
-}
-
-resource firewallsubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = if (!empty(ciderfirewall)){
-  name: '${vnet.name}/AzureFirewallSubnet'
-  properties: {
-    addressPrefix: ciderfirewall //'10.0.1.0/24'
-  }
-}
 resource pubipbastion 'Microsoft.Network/publicIPAddresses@2021-03-01'  = if (!empty(ciderbastion)) {
   name: '${prefix}${postfix}bastion'
   location: location
@@ -99,7 +106,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2021-08-01' = if (!empty(ciderb
     enableTunneling: true
     enableIpConnect: true
     // enableFileCopy: true
-    // enableShareableLink: true
+    enableShareableLink: true
     ipConfigurations: [
       {
         name: '${prefix}${postfix}bastion'

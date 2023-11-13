@@ -8,9 +8,9 @@ param cidersubnet string
 param ciderbastion string
 param ciderdnsrin string
 param ciderdnsrout string
-param cidergw string
+param cidergw string = ''
 param cidrop string
-param opvpnip string
+param opvpnip string = ''
 param srcip string
 param desip string
 
